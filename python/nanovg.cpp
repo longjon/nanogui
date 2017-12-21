@@ -119,6 +119,33 @@ void register_nanovg(py::module &m) {
         .def("SkewY", &nvgSkewY, "angle"_a)
         .def("Scale", &nvgScale, "x"_a, "y"_a)
         .def("CreateImage", &nvgCreateImage, "filename"_a, "imageFlags"_a)
+        .def("CreateImageRGBA", [](NVGcontext &ctx, int imageFlags, py::buffer b) {
+            py::buffer_info info = b.request();
+            if (info.format != py::format_descriptor<unsigned char>::format()) {
+              throw std::runtime_error("Expected uint8");
+            }
+            if (info.ndim != 3) {
+              throw std::runtime_error("Expected three dimns");
+            }
+            if (info.shape[2] != 4) {
+              throw std::runtime_error("Expected last dim to be four");
+            }
+            return nvgCreateImageRGBA(&ctx, info.shape[1], info.shape[0],
+              imageFlags, static_cast<unsigned char *>(info.ptr));
+          })
+        .def("UpdateImage", [](NVGcontext &ctx, int image, py::buffer b) {
+            py::buffer_info info = b.request();
+            if (info.format != py::format_descriptor<unsigned char>::format()) {
+              throw std::runtime_error("Expected uint8");
+            }
+            if (info.ndim != 3) {
+              throw std::runtime_error("Expected three dimns");
+            }
+            if (info.shape[2] != 4) {
+              throw std::runtime_error("Expected last dim to be four");
+            }
+            nvgUpdateImage(&ctx, image, static_cast<unsigned char *>(info.ptr));
+          })
         .def("DeleteImage", &nvgDeleteImage, "image"_a)
         .def("LinearGradient", &nvgLinearGradient, "sx"_a, "sy"_a, "ex"_a,
              "ey"_a, "icol"_a, "ocol"_a)
